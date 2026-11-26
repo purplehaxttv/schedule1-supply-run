@@ -1,0 +1,20 @@
+# Build output
+bin/
+obj/
+*.dll
+*.pdb
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# Local tooling
+.claude/
+
+# Local research, test saves and raw screenshots
+legacy/
+research/
+save-backups/
+shots/
