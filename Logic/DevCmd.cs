@@ -448,7 +448,10 @@ namespace SupplyRunLogic
         {
             string dir = @"D:\ModProjects\SupplyRun\shots";
             Directory.CreateDirectory(dir);
-            string path = Path.Combine(dir, (q["name"] ?? "shot") + ".png");
+            // file name only: never let the request choose a folder
+            string name = Path.GetFileName(q["name"] ?? "shot");
+            if (string.IsNullOrEmpty(name)) name = "shot";
+            string path = Path.Combine(dir, name + ".png");
             if (File.Exists(path)) File.Delete(path);
             ScreenCapture.CaptureScreenshot(path);
             return path;

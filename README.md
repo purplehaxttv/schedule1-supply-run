@@ -135,6 +135,8 @@ The DLL lands in `Release\bin\SupplyRun.dll`. The project files reference the ga
 - `launch.sh [slot]` starts the game and loads a save slot.
 - `Host/Host.cs` has the path to the logic DLL as a constant (`LogicPath`); adjust it to where you cloned the repo.
 
+The inspector can load code and call into the game, so it only answers requests that carry a per-session secret in an `X-Dev-Token` header. The host writes that secret to `Schedule I\UserData\SupplyRunDev.token` on startup and the scripts read it from there (set `SCHEDULE1_DIR` if the game is not in the default Steam folder). Requests with a browser `Origin` header or the wrong `Host` are refused. Install the dev host only while developing.
+
 Do not install the dev host and the release DLL with a full logic build at the same time, the feature would run twice.
 
 ## Related mods

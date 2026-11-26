@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using MelonLoader;
@@ -18,6 +19,10 @@ namespace SupplyRunDev
     //   GET /ping            answered on the listener thread (proves the process is alive)
     //   GET /reload          (re)loads the logic assembly on the main thread
     //   GET /x?cmd=...       forwarded to the logic assembly on the main thread, reply is its return value
+    // Every request must carry the per-session secret in an X-Dev-Token header. The secret is written
+    // to UserData/SupplyRunDev.token at startup for the dev scripts to read. A web page cannot send a
+    // custom header to another origin without a CORS preflight, which this listener never answers, so
+    // a browser tab cannot drive the game through this port.
     public class Host : MelonMod
     {
         private const string LogicPath = @"D:\ModProjects\SupplyRun\Logic\bin\SupplyRunLogic.dll";
@@ -27,6 +32,7 @@ namespace SupplyRunDev
         private static Thread thread;
         private static volatile bool running;
         private static MelonLogger.Instance log;
+        private static string token;
 
         private class Job
         {
@@ -50,6 +56,8 @@ namespace SupplyRunDev
             try { UnityEngine.Application.runInBackground = true; } catch { }
             try
             {
+                token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+                File.WriteAllText(Path.Combine(MelonLoader.Utils.MelonEnvironment.UserDataDirectory, "SupplyRunDev.token"), token);
                 listener = new HttpListener();
                 listener.Prefixes.Add($"http://localhost:{Port}/");
                 listener.Start();
@@ -131,6 +139,18 @@ namespace SupplyRunDev
             return sb.ToString();
         }
 
+        // Only the local dev scripts may talk to this port: right host name, no browser origin,
+        // and the session secret in a custom header.
+        private static bool Authorized(HttpListenerRequest r)
+        {
+            if (r.Headers["Origin"] != null) return false;
+            string host = r.Headers["Host"] ?? "";
+            if (host != "localhost:" + Port && host != "127.0.0.1:" + Port) return false;
+            string sent = r.Headers["X-Dev-Token"];
+            if (string.IsNullOrEmpty(sent) || token == null || sent.Length != token.Length) return false;
+            return CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(sent), Encoding.ASCII.GetBytes(token));
+        }
+
         private static void Loop()
         {
             while (running)
@@ -145,7 +165,12 @@ namespace SupplyRunDev
                 {
                     string path = ctx.Request.Url.AbsolutePath.Trim('/').ToLowerInvariant();
                     NameValueCollection q = ctx.Request.QueryString;
-                    if (path == "ping")
+                    if (!Authorized(ctx.Request))
+                    {
+                        reply = "forbidden";
+                        status = 403;
+                    }
+                    else if (path == "ping")
                     {
                         reply = $"pong scene='{lastScene}' logic={logicInfo} queued={queue.Count}";
                     }
