@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>SupplyRunLogic</AssemblyName>
+    <RootNamespace>SupplyRunLogic</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>none</DebugType>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin\</OutputPath>
+    <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Schedule I</GamePath>
+    <NoWarn>$(NoWarn);CS0618;MSB3277;CS1701;CS1702</NoWarn>
+    <DefineConstants Condition="'$(ToolsOnly)' == 'true'">$(DefineConstants);TOOLS_ONLY</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="$(GamePath)\MelonLoader\net6\MelonLoader.dll"><Private>false</Private></Reference>
+    <Reference Include="$(GamePath)\MelonLoader\net6\0Harmony.dll"><Private>false</Private></Reference>
+    <Reference Include="$(GamePath)\MelonLoader\net6\Il2CppInterop.Runtime.dll"><Private>false</Private></Reference>
+    <Reference Include="$(GamePath)\MelonLoader\net6\Il2CppInterop.Common.dll"><Private>false</Private></Reference>
+    <Reference Include="$(GamePath)\MelonLoader\net6\Iced.dll"><Private>false</Private></Reference>
+    <Reference Include="$(GamePath)\MelonLoader\Il2CppAssemblies\*.dll"><Private>false</Private></Reference>
+  </ItemGroup>
+
+</Project>
