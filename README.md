@@ -39,7 +39,7 @@ flowchart LR
 ## Install
 
 1. Install [MelonLoader](https://melonwiki.xyz/) 0.7.x into Schedule I and start the game once so it generates its assemblies.
-2. Build the mod (see below) or take a built `SupplyRun.dll`.
+2. Download `SupplyRun.dll` from the [latest release](https://github.com/purplehaxttv/schedule1-supply-run/releases/latest), or build it yourself (see below).
 3. Copy `SupplyRun.dll` into `Schedule I\Mods\`.
 4. Start the game. The MelonLoader console prints `Supply Run courier ready.`
 
@@ -143,3 +143,7 @@ Do not install the dev host and the release DLL with a full logic build at the s
 
 - [schedule1-fixed-cash-drops](https://github.com/purplehaxttv/schedule1-fixed-cash-drops): bigger payouts from broken ATMs, Cuke machines and trash recyclers.
 - [schedule1-chat-fx](https://github.com/purplehaxttv/schedule1-chat-fx): lets Firebot chat commands and redeems trigger effects in the game.
+
+## License
+
+MIT. See [LICENSE](LICENSE). Not affiliated with TVGS, the developer of Schedule I.
