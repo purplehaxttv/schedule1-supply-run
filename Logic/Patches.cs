@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using HarmonyLib;
 using Il2CppScheduleOne.Delivery;
 using Il2CppScheduleOne.Money;
@@ -22,6 +24,7 @@ namespace SupplyRunLogic
         internal static void Apply(HarmonyLib.Harmony h)
         {
             Healthy = true;
+            hookedCode.Clear();
             // required: without these an order would charge wrongly or ship the wrong cargo
             Patch(h, true, AccessTools.Method(typeof(DeliveryShop), "GetCartCost"), null, nameof(CartCostPost));
             Patch(h, true, AccessTools.Method(typeof(DeliveryShop), "GetDeliveryFee"), null, nameof(DeliveryFeePost));
@@ -31,12 +34,28 @@ namespace SupplyRunLogic
             // comfort: the courier still moves the right items for the right fee without them
             Patch(h, false, AccessTools.Method(typeof(DeliveryShop), "RefreshOrderButton"), nameof(OrderButtonPre), nameof(OrderButtonPost));
             Patch(h, false, AccessTools.Method(typeof(DeliveryShop), "GetPotentialDestinations"), null, nameof(DestinationsPost));
+            // Only the public method: in the game binary it and its RpcWriter are one and the same
+            // function, and hooking one function twice makes every normal order call itself forever.
             Patch(h, false, AccessTools.Method(typeof(DeliveryManager), "RecordDeliveryReceipt_Server"), nameof(SkipWhileSubmitting), null);
-            Patch(h, false, AccessTools.Method(typeof(DeliveryManager), "RpcWriter___Server_RecordDeliveryReceipt_Server_2582461062"), nameof(SkipWhileSubmitting), null);
             Patch(h, false, AccessTools.Method(typeof(VariableDatabase), "NotifyItemAcquired"), nameof(SkipWhileSubmitting), null);
             Patch(h, false, AccessTools.Method(typeof(DeliveryStatusDisplay), "AssignDelivery"), null, nameof(AssignDeliveryPost));
             Patch(h, false, AccessTools.Method(typeof(DeliveryApp), "SetOpen"), null, nameof(SetOpenPost));
             if (!Healthy) Core.Log.Error("Courier: a required game hook is missing (game update?). The courier is switched off until the mod is updated.");
+        }
+
+        private static readonly HashSet<IntPtr> hookedCode = new HashSet<IntPtr>();
+
+        // Address of the native function behind a game method, or zero when it cannot be read.
+        internal static IntPtr NativeCode(MethodBase target)
+        {
+            try
+            {
+                var field = Il2CppInterop.Common.Il2CppInteropUtils.GetIl2CppMethodInfoPointerFieldForGeneratedMethod(target);
+                if (field == null) return IntPtr.Zero;
+                IntPtr info = (IntPtr)field.GetValue(null);
+                return info == IntPtr.Zero ? IntPtr.Zero : Marshal.ReadIntPtr(info);
+            }
+            catch { return IntPtr.Zero; }
         }
 
         private static void Patch(HarmonyLib.Harmony h, bool required, MethodBase target, string prefix, string postfix)
@@ -47,6 +66,15 @@ namespace SupplyRunLogic
                 if (target == null)
                 {
                     Core.Log.Warning("Courier: hook target missing for " + label);
+                    if (required) Healthy = false;
+                    return;
+                }
+                // Two game methods can share one native function (the compiler folds identical ones).
+                // A second hook on the same function would recurse without end, so it is refused.
+                IntPtr code = NativeCode(target);
+                if (code != IntPtr.Zero && !hookedCode.Add(code))
+                {
+                    Core.Log.Warning("Courier: " + target.Name + " shares its code with a method that is already hooked, not hooking it again (" + label + ").");
                     if (required) Healthy = false;
                     return;
                 }
