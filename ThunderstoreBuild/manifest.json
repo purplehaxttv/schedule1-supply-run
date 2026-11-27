@@ -1,6 +1,6 @@
 {
   "name": "SupplyRun",
-  "version_number": "1.0.0",
+  "version_number": "1.0.1",
   "website_url": "https://github.com/purplehaxttv/schedule1-supply-run",
   "description": "Buy a courier from the Fixer, name a storage rack Courier, and ship your own stock between your properties with the game's delivery van. Packaging and quality are kept.",
   "dependencies": [
