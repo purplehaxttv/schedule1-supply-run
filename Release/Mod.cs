@@ -2,7 +2,7 @@ using System;
 using MelonLoader;
 using SupplyRunLogic;
 
-[assembly: MelonInfo(typeof(SupplyRun.Mod), "Supply Run", "1.0.0", "purplehaxttv")]
+[assembly: MelonInfo(typeof(SupplyRun.Mod), "Supply Run", "1.0.1", "purplehaxttv")]
 [assembly: MelonGame("TVGS", "Schedule I")]
 
 namespace SupplyRun
