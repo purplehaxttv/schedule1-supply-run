@@ -21,6 +21,9 @@ namespace SupplyRunLogic
             var list = app.deliveryShops;
             for (int i = 0; i < list.Count; i++)
                 if (list[i] != null && list[i].name == name) return list[i];
+            // not a pick-up point: one of the game's own delivery shops, by shop name
+            for (int i = 0; i < list.Count; i++)
+                if (list[i] != null && !list[i].name.StartsWith("SupplyRun ") && string.Equals(list[i].MatchingShopInterfaceName, code, StringComparison.OrdinalIgnoreCase)) return list[i];
             return null;
         }
 
@@ -42,6 +45,28 @@ namespace SupplyRunLogic
                     if (card == null) return "no card for " + q["prop"];
                     card.GetComponent<Button>().onClick.Invoke();
                     return Info(q["prop"]);
+                }
+                case "g.openshop":
+                {
+                    var p = Panel(q["prop"]);
+                    if (p == null) return "no shop " + q["prop"];
+                    Game.App.OpenShop(p);
+                    return Info(q["prop"]);
+                }
+                case "g.app":
+                {
+                    // open or close the Deliveries app itself (the release mod builds its cards on open)
+                    Game.App.SetOpen(q["open"] != "0");
+                    return "app open=" + Game.App.isOpen;
+                }
+                case "g.samecode":
+                {
+                    // which hooked delivery methods share one native function
+                    var dm = typeof(Il2CppScheduleOne.Delivery.DeliveryManager);
+                    var sb = new StringBuilder();
+                    foreach (string n in new[] { "RecordDeliveryReceipt_Server", "RpcWriter___Server_RecordDeliveryReceipt_Server_2582461062", "SendDelivery" })
+                        sb.AppendLine(n + " = 0x" + Patches.NativeCode(HarmonyLib.AccessTools.Method(dm, n)).ToInt64().ToString("X"));
+                    return sb.ToString();
                 }
                 case "g.panel": return Info(q["prop"]);
                 case "g.close":
